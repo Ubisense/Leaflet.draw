@@ -22,22 +22,7 @@ L.Draw.Marker = L.Draw.Feature.extend({
 		if (this._map) {
 			this._tooltip.updateContent({ text: L.drawLocal.draw.handlers.marker.tooltip.start });
 
-			// Same mouseMarker as in Draw.Polyline
-			if (!this._mouseMarker) {
-				this._mouseMarker = L.marker(this._map.getCenter(), {
-					icon: L.divIcon({
-						className: 'leaflet-mouse-marker',
-						iconAnchor: [20, 20],
-						iconSize: [40, 40]
-					}),
-					opacity: 0,
-					zIndexOffset: this.options.zIndexOffset
-				});
-			}
-
-			this._mouseMarker
-				.on('click', this._onClick, this)
-				.addTo(this._map);
+			this._clickPane.on('click', this._onClick, this);
 
 			this._map.on('mousemove', this._onMouseMove, this);
 		}
@@ -49,15 +34,11 @@ L.Draw.Marker = L.Draw.Feature.extend({
 		if (this._map) {
 			if (this._marker) {
 				this._marker.off('click', this._onClick, this);
-				this._map
-					.off('click', this._onClick, this)
-					.removeLayer(this._marker);
+				this._map.removeLayer(this._marker);
 				delete this._marker;
 			}
 
-			this._mouseMarker.off('click', this._onClick, this);
-			this._map.removeLayer(this._mouseMarker);
-			delete this._mouseMarker;
+			this._clickPane.off('click', this._onClick, this);
 
 			this._map.off('mousemove', this._onMouseMove, this);
 		}
@@ -67,18 +48,14 @@ L.Draw.Marker = L.Draw.Feature.extend({
 		var latlng = e.latlng;
 
 		this._tooltip.updatePosition(latlng);
-		this._mouseMarker.setLatLng(latlng);
 
 		if (!this._marker) {
 			this._marker = new L.Marker(latlng, {
 				icon: this.options.icon,
 				zIndexOffset: this.options.zIndexOffset
 			});
-			// Bind to both marker and map to make sure we get the click event.
 			this._marker.on('click', this._onClick, this);
-			this._map
-				.on('click', this._onClick, this)
-				.addLayer(this._marker);
+			this._map.addLayer(this._marker);
 		}
 		else {
 			this._marker.setLatLng(latlng);
@@ -86,7 +63,14 @@ L.Draw.Marker = L.Draw.Feature.extend({
 	},
 
 	_onClick: function () {
-		this._fireCreatedEvent();
+		if (!this._marker) { //on touch devices the marker won't have been created
+			var latlng = e.latlng;
+			this._marker = new L.Marker(latlng, {
+				icon: this.options.icon,
+				zIndexOffset: this.options.zIndexOffset
+			});
+			this._map.addLayer(this._marker);
+		}		this._fireCreatedEvent();
 
 		this.disable();
 		if (this.options.repeatMode) {
