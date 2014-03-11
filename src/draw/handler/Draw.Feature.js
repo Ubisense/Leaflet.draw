@@ -86,7 +86,7 @@ L.Draw.Feature = L.Handler.extend({
 
 			L.DomEvent.removeListener(this._container, 'keyup', this._cancelDrawing);
 			
-			this._clickPaneMarker.on('click', this._onPaneMarkerClick, this);
+			this._clickPaneMarker.off('click', this._onPaneMarkerClick, this);
 
 			this._map
 				.off('move', this._onMapMove, this)
